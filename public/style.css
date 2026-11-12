@@ -104,13 +104,14 @@ h3 { font-weight: 600; }
 .sec-link { float: right; font-size: 15px; letter-spacing: .06em; text-transform: none; font-variant: small-caps; text-decoration: none; }
 .sec-link:hover { text-decoration: underline; }
 .rule-p { font-style: italic; font-size: 22px; line-height: 1.45; max-width: 68ch; margin: 0 0 22px; }
-.rule-list { list-style: none; counter-reset: regle; margin: 30px 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 26px 56px; }
+.rule-list { list-style: none; counter-reset: regle; margin: 30px 0 0; padding: 0; display: grid; grid-template-columns: 1fr; gap: 26px; max-width: 78ch; }
 .rule-list li { counter-increment: regle; position: relative; padding-left: 46px; }
 .rule-list li::before { content: counter(regle, upper-roman); position: absolute; left: 0; top: 1px; width: 34px; text-align: right; color: var(--navy-2); font-feature-settings: 'lnum'; letter-spacing: .04em; }
 .rule-list li.plain { counter-increment: none; grid-column: 1 / -1; padding-left: 0; }
 .rule-list li.plain::before { content: none; }
 .rule-list h3 { margin: 0 0 4px; font-weight: 400; font-variant: small-caps; letter-spacing: .09em; font-size: 20px; color: var(--navy); }
-.rule-list p { margin: 0; }
+.rule-list p { margin: 0 0 .6em; }
+.rule-list p:last-child { margin-bottom: 0; }
 .rule-list .rule-p { margin: 0; }
 
 /* ---------- Fausses bonnes idées ---------- */

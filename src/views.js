@@ -363,7 +363,7 @@ function ruleForm({ text, max, csrf }) {
     ${csrfField(csrf)}
     <label for="r-text" class="sr">Texte de la règle</label>
     <textarea id="r-text" name="text" rows="26" maxlength="${max}">${e(text)}</textarea>
-    <p class="hint">Séparez les blocs par une ligne vide. Un bloc d’une seule ligne est un paragraphe simple ; un bloc de plusieurs lignes devient un article numéroté, dont la première ligne est le titre. Un texte vide masque la règle.</p>
+    <p class="hint">Séparez les blocs par une ligne vide. Un bloc d’une seule ligne est un paragraphe simple ; un bloc de plusieurs lignes devient un article numéroté, dont la première ligne est le titre et chaque ligne suivante un paragraphe. Un texte vide masque la règle.</p>
     <p class="actions"><button class="btn" type="submit">Enregistrer</button><a class="btn ghost" href="/">Annuler</a>
       <button class="linklike" type="submit" name="action" value="defaut" formnovalidate data-confirm-btn="Remplacer le texte actuel par la règle d’origine ?">Rétablir la règle d’origine</button></p>
   </form>`;

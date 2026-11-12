@@ -1,33 +1,29 @@
 // Règle du cercle : texte libre, modifiable par les administrateurs, affiché sur l'accueil.
 // Format : blocs séparés par une ligne vide. Un bloc d'une seule ligne est un paragraphe
-// d'introduction ; un bloc de plusieurs lignes est un article (1re ligne = titre).
+// d'introduction ; un bloc de plusieurs lignes est un article (1re ligne = titre,
+// chaque ligne suivante = un paragraphe).
 const { db } = require('./db');
 const { e, typo, paragraphs } = require('./util');
 
 const KEY = 'regle';
 const MAX = 8000;
 
-// Les articles I à V reprennent le texte « Du point de vue spirituel » ; VI et VII, le projet du cercle.
-const DEFAULT_RULE = `Le but
-Le but de ma vie est le salut de mon âme, et non pas l'espoir de ne jamais recevoir de reproche sur la façon dont j'accomplis mon métier.
+const DEFAULT_RULE = `« Le métier me doit donc le temps qu'il me faut pour ma vie intérieure » (Alain de Penfentenyo)
 
-Le travail
-Le travail est une prière. Oui, mais il ne remplace pas entièrement la prière ; et il n'est une prière qu'autant qu'il est offert à Dieu. Si le travail a pour raison d'être l'argent ou les honneurs, ou l'espoir d'une félicitation ou d'une récompense, ce n'est plus une prière.
+Le constat
+Force est de constater que cela n'est pas évident… Ce cercle a pour but de vous y aider, de faire de vous de bons catholiques militaires.
+J'ai bien dit de bons catholiques et de bons militaires, ensemble ! C'est notre idéal de vie : être saint en étant militaire. Nous ne pouvons pas nous y prendre comme le reste des autres professions.
+Par exemple, les médecins ont leurs associations d'éthique catholique et leur revue (les Cahiers Saint-Raphaël). Pour les militaires, rien, alors que notre métier en a tout autant besoin. Ce cercle a pour objectif d'y remédier.
 
-La prière
-Méditation et prière sont choses nécessaires. Elles doivent être quotidiennes. Prière… et non pas récitation de formules.
+Les limites des cercles classiques
+Pour la formation intellectuelle, rien de tel que les cercles. Cependant cela exige une chose primordiale : la constance. Dans l'armée, cela est mission impossible. De plus, cela ne traite que la formation intellectuelle, délaissant la vie intérieure, la piété, l'apostolat, etc. Une simple cellule ne saurait donc répondre entièrement à notre sujet.
 
-Le temps
-Le métier me doit le temps qu'il me faut pour ma vie intérieure. Ce temps se prévoit : chacun tient un emploi du temps souple mais précis, qui résiste aux aléas du service.
+Le concept du site
+1. Formation intellectuelle : partage de fiches de lecture, d'idées de lecture et de citations, axées sur la vie militaire en tant que catholique. Cela demandera peu de travail : il suffit de prendre quelques notes à la lecture d'un bon livre pour le partager avec les autres. Cela peut être fait à très grande échelle afin d'avoir une base de données foisonnante !
+2. Concilier vie catho et vie militaire (« emploi du temps ») : il faut être très organisé pour garder une vie intérieure malgré les aléas du métier, mais de façon souple. Plus que des emplois du temps, cette section est là pour partager des conseils pour avoir une vie spirituelle normale. Si chacun partage les siens, on finira par avoir une ligne de conduite solide, adaptée à notre métier.
 
-Le bilan
-Une année qui ne m'a pas fait faire de progrès du point de vue spirituel est une mauvaise année, quels qu'en soient les succès. Chacun fait régulièrement le point.
-
-La formation
-Notre métier exige une formation propre. Chacun lit, puis partage : une fiche, une idée de lecture, une citation.
-
-La constance
-Peu, mais régulièrement. Ce que nous refusons, c'est de ne rien faire.`;
+Les limites du site
+Évidemment, rien ne vaut de se réunir entre nous. Partout où cela est possible, priez ensemble (« Là où deux ou trois sont réunis en mon nom, je suis là, au milieu d'eux », Mt 18, 20), étudiez ensemble, demandez-vous conseil en réel. Ce site ne saura jamais remplacer cela.`;
 
 function getRule() {
   const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(KEY);
@@ -49,7 +45,7 @@ function ruleHtml(text) {
     if (lines.length < 2) {
       (articles.length ? articles : intro).push(`<p class="rule-p">${e(typo(lines[0]))}</p>`);
     } else {
-      articles.push(`<li><h3>${e(typo(lines[0]))}</h3><p>${lines.slice(1).map(l => e(typo(l))).join('<br>')}</p></li>`);
+      articles.push(`<li><h3>${e(typo(lines[0]))}</h3>${lines.slice(1).map(l => `<p>${e(typo(l))}</p>`).join('')}</li>`);
     }
   }
   // Les paragraphes placés après le premier article restent dans la liste, hors numérotation
