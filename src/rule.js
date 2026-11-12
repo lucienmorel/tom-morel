@@ -20,7 +20,7 @@ Pour la formation intellectuelle, rien de tel que les cercles. Cependant cela ex
 
 Le concept du site
 1. Formation intellectuelle : partage de fiches de lecture, d'idées de lecture et de citations, axées sur la vie militaire en tant que catholique. Cela demandera peu de travail : il suffit de prendre quelques notes à la lecture d'un bon livre pour le partager avec les autres. Cela peut être fait à très grande échelle afin d'avoir une base de données foisonnante !
-2. Concilier vie catho et vie militaire (« emploi du temps ») : il faut être très organisé pour garder une vie intérieure malgré les aléas du métier, mais de façon souple. Plus que des emplois du temps, cette section est là pour partager des conseils pour avoir une vie spirituelle normale. Si chacun partage les siens, on finira par avoir une ligne de conduite solide, adaptée à notre métier.
+2. Concilier vie catho et vie militaire (« carnet de route ») : il faut être très organisé pour garder une vie intérieure malgré les aléas du métier, mais de façon souple. Plus que des emplois du temps, cette section est là pour partager des conseils pour avoir une vie spirituelle normale. Si chacun partage les siens, on finira par avoir une ligne de conduite solide, adaptée à notre métier.
 
 Les limites du site
 Évidemment, rien ne vaut de se réunir entre nous. Partout où cela est possible, priez ensemble (« Là où deux ou trois sont réunis en mon nom, je suis là, au milieu d'eux », Mt 18, 20), étudiez ensemble, demandez-vous conseil en réel. Ce site ne saura jamais remplacer cela.`;

@@ -224,7 +224,7 @@ function listPdf(rows, out) {
       const y = doc.y;
       doc.font('B').fontSize(12.2).fillColor(INK)
         .text(typo(r.title), M, y, { width: W(doc) - rightW - 16, continued: true })
-        .font('I').fillColor(MUTED).text(`  —  ${r.author}${r.year ? ', ' + r.year : ''}`);
+        .font('I').fillColor(MUTED).text(`  —  ${r.author}${r.year ? ', ' + r.year : ''}${r.essential ? '  ·  à avoir lu dans sa vie' : ''}`);
       const after = doc.y;
       doc.font('R').fontSize(9.5).fillColor(MUTED)
         .text(r.by_name || '', doc.page.width - M - rightW, y + 2.5, { width: rightW, align: 'right' });

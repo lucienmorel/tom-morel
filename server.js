@@ -11,6 +11,7 @@ const V = require('./src/views');
 const pdf = require('./src/pdf');
 const ol = require('./src/openlibrary');
 const R = require('./src/rule');
+const T = require('./src/texts');
 const { toArr, clean, frCompare, contentDisposition, slug } = require('./src/util');
 
 const app = express();
@@ -166,12 +167,15 @@ app.get('/bibliotheque', (req, res) => {
   const where = [], params = [];
   if (q) { where.push('(b.title LIKE ? OR b.author LIKE ?)'); params.push(`%${q}%`, `%${q}%`); }
   if (theme) { where.push('b.theme_id = ?'); params.push(theme); }
+  const essential = req.query.avoirlu === '1';
+  if (essential) where.push('b.essential = 1');
   let books = db.prepare(`${BOOK_SELECT} ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
     ORDER BY b.created_at DESC, b.id DESC`).all(...params);
   if (sort === 'titre') books.sort((a, b) => frCompare(a.title, b.title));
   if (sort === 'auteur') books.sort((a, b) => frCompare(a.author, b.author));
   if (sort === 'note') books.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-  render(req, res, 'Bibliothèque', V.library({ books, themes: themesWithCount(), q, theme, sort }), 'lib');
+  render(req, res, 'Bibliothèque', V.library({ books, themes: themesWithCount(), q, theme, sort, essential,
+    nEssential: db.prepare('SELECT COUNT(*) n FROM books WHERE essential = 1').get().n }), 'lib');
 });
 
 /* ---------- Fiches ---------- */
@@ -233,6 +237,7 @@ async function saveBook(req, res, existing) {
     rating: clean(b.rating, 1),
     summary: String(b.summary || '').replace(/\r\n/g, '\n').trim().slice(0, 20000),
     read_if: clean(b.read_if, 300),
+    essential: b.essential === '1' ? 1 : 0,
     cover: existing ? existing.cover : null,
   };
   const texts = toArr(b.quote_text), pages = toArr(b.quote_page);
@@ -275,14 +280,14 @@ async function saveBook(req, res, existing) {
     const tid = themeId(values.theme);
     let bookId;
     if (isEdit) {
-      db.prepare(`UPDATE books SET theme_id=?, title=?, author=?, year=?, isbn=?, rating=?, summary=?, read_if=?, cover=?, updated_at=datetime('now') WHERE id=?`)
-        .run(tid, values.title, values.author, year, values.isbn || null, rating, values.summary, values.read_if || null, cover, existing.id);
+      db.prepare(`UPDATE books SET theme_id=?, title=?, author=?, year=?, isbn=?, rating=?, essential=?, summary=?, read_if=?, cover=?, updated_at=datetime('now') WHERE id=?`)
+        .run(tid, values.title, values.author, year, values.isbn || null, rating, values.essential, values.summary, values.read_if || null, cover, existing.id);
       bookId = existing.id;
       db.prepare('DELETE FROM quotes WHERE book_id = ?').run(bookId);
     } else {
-      bookId = db.prepare(`INSERT INTO books (user_id, theme_id, title, author, year, isbn, rating, summary, read_if, cover)
-        VALUES (?,?,?,?,?,?,?,?,?,?)`)
-        .run(req.user.id, tid, values.title, values.author, year, values.isbn || null, rating, values.summary, values.read_if || null, cover).lastInsertRowid;
+      bookId = db.prepare(`INSERT INTO books (user_id, theme_id, title, author, year, isbn, rating, essential, summary, read_if, cover)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?)`)
+        .run(req.user.id, tid, values.title, values.author, year, values.isbn || null, rating, values.essential, values.summary, values.read_if || null, cover).lastInsertRowid;
     }
     const ins = db.prepare('INSERT INTO quotes (book_id, text, page, position) VALUES (?,?,?,?)');
     quotes.forEach((q, i) => ins.run(bookId, q.text, q.page || null, i));
@@ -515,31 +520,37 @@ app.post('/fausses-bonnes-idees/:id/supprimer', A.csrfCheck, (req, res) => {
   res.redirect('/fausses-bonnes-idees');
 });
 
-/* ---------- Emplois du temps ---------- */
+/* ---------- Carnet de route (conseils, organisation, retours d'expérience) ---------- */
 
-function schedulesPage(req, res, error, status = 200) {
+function schedulesPage(req, res, { error, values, status = 200 } = {}) {
   const items = db.prepare(`SELECT s.*, u.username AS by_name FROM schedules s JOIN users u ON u.id = s.user_id
     ORDER BY s.created_at DESC, s.id DESC`).all();
-  render(req, res, 'Emplois du temps', V.schedules({ items, user: req.user, csrf: req.session.csrf, error }), 'edt', status);
+  render(req, res, 'Carnet de route', V.schedules({ items, user: req.user, csrf: req.session.csrf, error, values }), 'edt', status);
 }
 
-app.get('/emplois-du-temps', (req, res) => schedulesPage(req, res));
+app.get('/carnet-de-route', (req, res) => schedulesPage(req, res));
+// Ancienne adresse de la page
+app.get('/emplois-du-temps', (req, res) => res.redirect(301, '/carnet-de-route'));
 
-app.post('/emplois-du-temps', upload('file', 15), A.csrfCheck, (req, res) => {
-  if (req.uploadError) return schedulesPage(req, res, req.uploadError, 400);
+app.post('/carnet-de-route', upload('file', 15), A.csrfCheck, (req, res) => {
   const title = clean(req.body.title, 120);
-  const note = String(req.body.note || '').trim().slice(0, 1000);
-  if (!title) return schedulesPage(req, res, 'Le titre est obligatoire.', 400);
-  if (!req.file || !isPdf(req.file.buffer)) return schedulesPage(req, res, 'Le fichier doit être un PDF.', 400);
-  const filename = saveFile(SCHED_DIR, req.file.buffer, 'pdf');
+  const note = String(req.body.note || '').replace(/\r\n/g, '\n').trim().slice(0, 10000);
+  const fail = error => schedulesPage(req, res, { error, values: { title, note }, status: 400 });
+  if (req.uploadError) return fail(req.uploadError);
+  if (!title) return fail('Le titre est obligatoire.');
+  const hasFile = req.file && req.file.size;
+  if (!note && !hasFile) return fail('Ajoutez un texte, un fichier PDF, ou les deux.');
+  if (hasFile && !isPdf(req.file.buffer)) return fail('Le fichier doit être un PDF.');
+  // filename vide = entrée sans fichier joint
+  const filename = hasFile ? saveFile(SCHED_DIR, req.file.buffer, 'pdf') : '';
   db.prepare('INSERT INTO schedules (user_id, title, note, filename) VALUES (?,?,?,?)').run(req.user.id, title, note || null, filename);
-  A.setFlash(req, 'ok', 'Emploi du temps déposé.');
-  res.redirect('/emplois-du-temps');
+  A.setFlash(req, 'ok', 'Ajouté au carnet de route.');
+  res.redirect('/carnet-de-route');
 });
 
 app.get('/emplois/:id/fichier', (req, res) => {
   const s = db.prepare('SELECT * FROM schedules WHERE id = ?').get(req.params.id);
-  if (!s) return notFound(req, res);
+  if (!s || !s.filename) return notFound(req, res);
   pdfHeaders(res, `${slug(s.title)}.pdf`);
   res.sendFile(path.join(SCHED_DIR, s.filename), err => { if (err && !res.headersSent) notFound(req, res); });
 });
@@ -550,8 +561,8 @@ app.post('/emplois/:id/supprimer', A.csrfCheck, (req, res) => {
   if (!req.user.is_admin && s.user_id !== req.user.id) return res.status(403).send('Action non autorisée.');
   db.prepare('DELETE FROM schedules WHERE id = ?').run(s.id);
   removeFile(SCHED_DIR, s.filename);
-  A.setFlash(req, 'ok', 'Emploi du temps supprimé.');
-  res.redirect('/emplois-du-temps');
+  A.setFlash(req, 'ok', `« ${s.title} » retiré du carnet de route.`);
+  res.redirect('/carnet-de-route');
 });
 
 /* ---------- Compte ---------- */
@@ -600,6 +611,16 @@ adminRouter.post('/regle', A.csrfCheck, (req, res) => {
   R.setRule(req.body.text);
   A.setFlash(req, 'ok', 'Règle du cercle mise à jour.');
   res.redirect('/');
+});
+
+adminRouter.get('/textes', (req, res) => {
+  render(req, res, 'Descriptions des pages', V.textsForm({ items: T.allIntros(), max: T.MAX, csrf: req.session.csrf }), 'admin');
+});
+
+adminRouter.post('/textes', A.csrfCheck, (req, res) => {
+  for (const { key } of T.allIntros()) T.setIntro(key, req.body[`intro_${key}`]);
+  A.setFlash(req, 'ok', 'Descriptions des pages mises à jour.');
+  res.redirect('/admin/textes');
 });
 
 adminRouter.post('/comptes', A.csrfCheck, (req, res) => {

@@ -2,13 +2,18 @@ const { e: esc, typo, parasHtml, fmtDate, plural, stripQuotes } = require('./uti
 const e = s => esc(s);
 const te = s => esc(typo(s));
 const { SITE_NAME, MONOGRAM } = require('./config');
+const { intro } = require('./texts');
+
+// Description en haut de page (modifiable dans l'administration)
+const lede = key => { const t = intro(key); return t ? `<p class="lede">${te(t)}</p>` : ''; };
+const ESSENTIAL = 'À avoir lu dans sa vie';
 
 const NAV = [
   ['/', 'Accueil', 'home'],
   ['/bibliotheque', 'Bibliothèque', 'lib'],
   ['/citations', 'Citations', 'cit'],
   ['/fausses-bonnes-idees', 'Fausses bonnes idées', 'fbi'],
-  ['/emplois-du-temps', 'Emplois du temps', 'edt'],
+  ['/carnet-de-route', 'Carnet de route', 'edt'],
   ['/telechargements', 'Téléchargements', 'dl'],
 ];
 
@@ -70,6 +75,7 @@ const card = b => `
   <article class="card">
     <a href="/livres/${b.id}">
       ${cover(b)}
+      ${b.essential ? `<div class="essential">${ESSENTIAL}</div>` : ''}
       <div class="theme">${e(b.theme || 'Sans thème')}</div>
       <h3 class="t">${te(b.title)}</h3>
       <div class="a">${e(b.author)}</div>
@@ -103,7 +109,7 @@ function home({ latest, stats, ruleHtml, isAdmin }) {
   <section class="hero">
     <p class="kicker">Lire, retenir, transmettre</p>
     <h1>Proposer une lecture</h1>
-    <p class="lede">Une couverture, un thème, un résumé, les citations qui ont compté. Le site compose la fiche et l’ajoute aux recueils communs.</p>
+    ${lede('home')}
     <p class="actions"><a class="btn" href="/livres/nouveau">Rédiger une fiche</a><a class="btn ghost" href="/citations">Noter une citation</a><a class="btn ghost" href="/bibliotheque">Parcourir la bibliothèque</a></p>
     <p class="stats">${plural(stats.books, 'fiche')} · ${plural(stats.quotes, 'citation')} · ${plural(stats.themes, 'thème')}</p>
   </section>
@@ -118,11 +124,13 @@ function home({ latest, stats, ruleHtml, isAdmin }) {
   </section>`;
 }
 
-function library({ books, themes, q, theme, sort }) {
+function library({ books, themes, q, theme, sort, essential, nEssential }) {
   const opt = (v, label, cur) => `<option value="${e(v)}"${String(cur) === String(v) ? ' selected' : ''}>${e(label)}</option>`;
   return `
   <h1>Bibliothèque</h1>
+  ${lede('lib')}
   <form class="filters" method="get" action="/bibliotheque" role="search">
+    ${essential ? '<input type="hidden" name="avoirlu" value="1">' : ''}
     <div><label for="q">Titre ou auteur</label><input id="q" name="q" value="${e(q)}" placeholder="Rechercher"></div>
     <div><label for="th">Thème</label><select id="th" name="theme">${opt('', 'Tous les thèmes', theme)}${themes.map(t => opt(t.id, `${t.name} (${t.n})`, theme)).join('')}</select></div>
     <div><label for="so">Trier par</label><select id="so" name="tri">
@@ -130,8 +138,8 @@ function library({ books, themes, q, theme, sort }) {
     </select></div>
     <div class="f-btn"><button class="btn" type="submit">Filtrer</button></div>
   </form>
-  ${themes.length ? `<p class="chips">${themes.map(t =>
-    `<a href="/bibliotheque?theme=${t.id}"${String(theme) === String(t.id) ? ' class="on"' : ''}>${e(t.name)}</a>`).join('')}${theme || q ? '<a href="/bibliotheque" class="reset">Tout afficher</a>' : ''}</p>` : ''}
+  ${themes.length || nEssential ? `<p class="chips">${nEssential || essential ? `<a href="/bibliotheque?avoirlu=1" class="chip-ess${essential ? ' on' : ''}">${ESSENTIAL} (${nEssential})</a>` : ''}${themes.map(t =>
+    `<a href="/bibliotheque?theme=${t.id}"${String(theme) === String(t.id) ? ' class="on"' : ''}>${e(t.name)}</a>`).join('')}${theme || q || essential ? '<a href="/bibliotheque" class="reset">Tout afficher</a>' : ''}</p>` : ''}
   <p class="count">${plural(books.length, 'fiche')}</p>
   ${books.length ? grid(books) : '<p class="empty">Aucune fiche ne correspond.</p>'}`;
 }
@@ -155,6 +163,7 @@ function bookDetail({ book, quotes, canEdit, csrf }) {
       <p class="book-author">${e(book.author)}</p>
       ${meta ? `<p class="meta">${meta}</p>` : ''}
       ${book.rating ? `<p class="rating" aria-label="Note : ${book.rating} sur 5"><span class="dots">${'<i class="on"></i>'.repeat(book.rating)}${'<i></i>'.repeat(5 - book.rating)}</span> ${book.rating}/5</p>` : ''}
+      ${book.essential ? `<p class="essential big"><a href="/bibliotheque?avoirlu=1">${ESSENTIAL}</a></p>` : ''}
       <p class="byline">Proposée par ${e(book.by_name || 'un ancien membre')}, le ${fmtDate(book.created_at)}</p>
 
       <h2 class="sec">Résumé</h2>
@@ -206,6 +215,7 @@ function bookForm({ values = {}, quotes = [], themes, error, csrf, action, isEdi
         </select></div>
       </div>
       <p class="hint">Choisissez un thème existant ou saisissez-en un nouveau.</p>
+      <label class="check ess-check"><input type="checkbox" name="essential" value="1"${v.essential ? ' checked' : ''}> ${ESSENTIAL}</label>
     </fieldset>
 
     <fieldset>
@@ -261,7 +271,7 @@ function citations({ items, q, origine, user, csrf, error, values, sources }) {
   const opt = (v, label) => `<option value="${v}"${origine === v ? ' selected' : ''}>${label}</option>`;
   return `
   <h1>Citations</h1>
-  <p class="lede">Une phrase retenue, sans rédiger toute une fiche : il suffit de la référence.</p>
+  ${lede('cit')}
   <details class="panel"${error || !items.length ? ' open' : ''}>
     <summary>Ajouter une citation</summary>
     ${error ? `<p class="error">${e(error)}</p>` : ''}
@@ -322,7 +332,7 @@ function discouragedFields(v = {}) {
 function discouraged({ items, user, csrf, error, values }) {
   return `
   <h1>Fausses bonnes idées</h1>
-  <p class="lede">Les ouvrages que l’on déconseille : séduisants sur le papier, décevants ou trompeurs à la lecture. Un titre suffit.</p>
+  ${lede('fbi')}
   <details class="panel"${error || !items.length ? ' open' : ''}>
     <summary>Déconseiller un ouvrage</summary>
     ${error ? `<p class="error">${e(error)}</p>` : ''}
@@ -369,42 +379,57 @@ function ruleForm({ text, max, csrf }) {
   </form>`;
 }
 
-function schedules({ items, user, csrf, error }) {
+function schedules({ items, user, csrf, error, values = {} }) {
   return `
-  <h1>Emplois du temps</h1>
-  <p class="lede">Chacun partage son organisation, ses habitudes de travail et de lecture.</p>
+  <h1>Carnet de route</h1>
+  ${lede('carnet')}
   <details class="panel"${error ? ' open' : ''}>
-    <summary>Déposer un emploi du temps</summary>
+    <summary>Ajouter au carnet</summary>
     ${error ? `<p class="error">${e(error)}</p>` : ''}
-    <form method="post" action="/emplois-du-temps" enctype="multipart/form-data">
+    <form method="post" action="/carnet-de-route" enctype="multipart/form-data">
       ${csrfField(csrf)}
       <div class="cols">
-        <div><label for="s-title">Titre</label><input id="s-title" name="title" required maxlength="120" placeholder="Semaine type, période d’examens…"></div>
-        <div><label for="s-file">Fichier PDF, 15 Mo maximum</label><input id="s-file" name="file" type="file" accept="application/pdf" required></div>
+        <div><label for="s-title">Titre</label><input id="s-title" name="title" required maxlength="120" value="${e(values.title || '')}" placeholder="Semaine type, conseil, retour d’expérience…"></div>
+        <div><label for="s-file">Fichier PDF <span class="opt">facultatif, 15 Mo maximum</span></label><input id="s-file" name="file" type="file" accept="application/pdf"></div>
       </div>
-      <label for="s-note">Habitudes <span class="opt">facultatif</span></label>
-      <textarea id="s-note" name="note" rows="3" maxlength="1000" placeholder="Lever à 6 h, trente minutes de lecture avant le service…"></textarea>
-      <p><button class="btn" type="submit">Déposer</button></p>
+      <label for="s-note">Texte <span class="opt">conseil, organisation, retex…</span></label>
+      <textarea id="s-note" name="note" rows="6" maxlength="10000" placeholder="Lever à 6 h, trente minutes de lecture avant le service…">${e(values.note || '')}</textarea>
+      <p class="hint">Un texte, un PDF, ou les deux. Séparez les paragraphes par une ligne vide.</p>
+      <p><button class="btn" type="submit">Ajouter</button></p>
     </form>
   </details>
   ${items.length ? `<div class="sched-list">${items.map(s => `
     <article class="sched">
       <div>
-        <h3><a href="/emplois/${s.id}/fichier" target="_blank" rel="noopener">${e(s.title)}</a></h3>
+        <h3>${s.filename ? `<a href="/emplois/${s.id}/fichier" target="_blank" rel="noopener">${te(s.title)}</a>` : te(s.title)}</h3>
         <p class="meta">${e(s.by_name)} · ${fmtDate(s.created_at)}</p>
-        ${s.note ? `<p class="note">${e(s.note)}</p>` : ''}
+        ${s.note ? `<div class="note">${parasHtml(typo(s.note))}</div>` : ''}
       </div>
       <div class="sched-actions">
-        <a class="btn ghost" href="/emplois/${s.id}/fichier" target="_blank" rel="noopener">Consulter</a>
-        ${(user.is_admin || user.id === s.user_id) ? `<form method="post" action="/emplois/${s.id}/supprimer" data-confirm="Supprimer cet emploi du temps ?">${csrfField(csrf)}<button class="linklike danger">Supprimer</button></form>` : ''}
+        ${s.filename ? `<a class="btn ghost" href="/emplois/${s.id}/fichier" target="_blank" rel="noopener">Consulter le PDF</a>` : ''}
+        ${(user.is_admin || user.id === s.user_id) ? `<form method="post" action="/emplois/${s.id}/supprimer" data-confirm="Supprimer cette entrée du carnet ?">${csrfField(csrf)}<button class="linklike danger">Supprimer</button></form>` : ''}
       </div>
-    </article>`).join('')}</div>` : '<p class="empty">Aucun emploi du temps partagé pour le moment.</p>'}`;
+    </article>`).join('')}</div>` : '<p class="empty">Le carnet de route est vide pour le moment.</p>'}`;
+}
+
+function textsForm({ items, max, csrf }) {
+  return `
+  <h1>Descriptions des pages</h1>
+  <p class="lede">Le court texte affiché en haut de chaque page, sous le titre.</p>
+  <form method="post" action="/admin/textes" class="book-form">
+    ${csrfField(csrf)}
+    ${items.map(t => `
+      <label for="t-${t.key}">${e(t.label)}</label>
+      <textarea id="t-${t.key}" name="intro_${t.key}" rows="3" maxlength="${max}">${e(t.value)}</textarea>`).join('')}
+    <p class="hint">Un champ laissé vide reprend le texte d’origine (la Bibliothèque n’en a pas).</p>
+    <p class="actions"><button class="btn" type="submit">Enregistrer</button><a class="btn ghost" href="/admin">Retour</a></p>
+  </form>`;
 }
 
 function downloads({ books, stats }) {
   return `
   <h1>Téléchargements</h1>
-  <p class="lede">Les recueils sont recomposés à chaque téléchargement : ils intègrent toujours les dernières fiches.</p>
+  ${lede('dl')}
   <div class="dl-grid">
     <a class="dl" href="/telechargements/recueil-des-citations.pdf">
       <span class="dl-k">Recueil</span>
@@ -451,6 +476,11 @@ function admin({ users, themes, books, csrf, me }) {
   <section>
     <h2 class="sec">Règle du cercle</h2>
     <p>Le texte affiché sur la page d’accueil. <a href="/admin/regle">Modifier la règle →</a></p>
+  </section>
+
+  <section>
+    <h2 class="sec">Descriptions des pages</h2>
+    <p>Le court texte en haut de chaque page (Accueil, Bibliothèque, Citations…). <a href="/admin/textes">Modifier les descriptions →</a></p>
   </section>
 
   <section>
@@ -505,4 +535,4 @@ function admin({ users, themes, books, csrf, me }) {
 
 const message = (title, text) => `<section class="narrow msg"><h1>${e(title)}</h1><p class="lede">${e(text)}</p><p><a class="btn ghost" href="/">Retour à l’accueil</a></p></section>`;
 
-module.exports = { layout, login, home, library, bookDetail, bookForm, citations, citationForm, discouraged, discouragedForm, ruleForm, schedules, downloads, account, admin, message };
+module.exports = { layout, login, home, library, bookDetail, bookForm, citations, citationForm, discouraged, discouragedForm, ruleForm, textsForm, schedules, downloads, account, admin, message };

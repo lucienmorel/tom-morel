@@ -1,6 +1,6 @@
 # Cabinet de lecture
 
-Partage de fiches de lecture, de citations et d’emplois du temps, réservé aux membres.
+Partage de fiches de lecture, de citations et de conseils (carnet de route), réservé aux membres.
 Node.js 22 · Express · SQLite (better-sqlite3) · PDFKit · Nginx · systemd.
 
 ## Installation sur le VPS (Debian 12/13)
@@ -97,7 +97,10 @@ sudo tar czf ~/cabinet-$(date +%F).tgz -C /opt/cabinet-lecture data
   (Administration → Règle du cercle). Un texte vide la masque.
 - **Fausses bonnes idées** : liste des ouvrages déconseillés (titre, auteur et raison facultatifs),
   sans résumé ni citations.
-- **Emplois du temps** : dépôt de PDF, visibles par les inscrits.
+- **Carnet de route** : conseils, organisation, retours d’expérience ; un texte, un PDF, ou les deux.
+- **À avoir lu dans sa vie** : case à cocher sur une fiche ; étiquette sur la fiche et filtre dans la bibliothèque.
+- **Descriptions des pages** : le texte en haut de chaque page est modifiable par les administrateurs
+  (Administration → Descriptions des pages).
 - **Administration** : comptes (création, nouveau code, suppression), thèmes (renommer,
   fusionner, supprimer), modération des fiches.
 

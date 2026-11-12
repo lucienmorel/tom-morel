@@ -93,6 +93,11 @@ CREATE INDEX IF NOT EXISTS idx_books_created ON books(created_at);
 CREATE INDEX IF NOT EXISTS idx_quotes_book ON quotes(book_id);
 `);
 
+// Migrations légères : colonnes ajoutées après la première mise en service
+if (!db.prepare('PRAGMA table_info(books)').all().some(c => c.name === 'essential')) {
+  db.exec('ALTER TABLE books ADD COLUMN essential INTEGER NOT NULL DEFAULT 0');
+}
+
 // Purge des sessions expirées au démarrage puis toutes les heures
 // et des couvertures provisoires (recherches ISBN non suivies d'un enregistrement) de plus de 24 h
 const purge = () => {
