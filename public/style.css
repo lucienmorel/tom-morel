@@ -119,6 +119,8 @@ h3 { font-weight: 600; }
 .fbi h3 { margin: 0; font-size: 22px; font-weight: 400; color: var(--navy); }
 .fbi-a { color: var(--ink); }
 .fbi-r { margin: 4px 0 0; max-width: 70ch; }
+.fbi-r p { margin: 0 0 .6em; }
+.fbi-r p:last-child { margin-bottom: 0; }
 .fbi .cit-meta { margin-top: 6px; }
 
 /* ---------- Grille de livres ---------- */

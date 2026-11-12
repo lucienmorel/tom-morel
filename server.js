@@ -466,7 +466,7 @@ const getDiscouraged = id => db.prepare('SELECT * FROM discouraged WHERE id = ?'
 const readDiscouraged = body => ({
   title: clean(body.title, 300),
   author: clean(body.author, 200),
-  reason: clean(body.reason, 500),
+  reason: String(body.reason || '').replace(/\r\n/g, '\n').trim().slice(0, 5000),
 });
 
 function discouragedPage(req, res, { error, values, status = 200 } = {}) {

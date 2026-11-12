@@ -314,8 +314,9 @@ function discouragedFields(v = {}) {
         <div><label for="d-title">Titre de l’ouvrage</label><input id="d-title" name="title" required maxlength="300" value="${e(v.title || '')}"></div>
         <div><label for="d-author">Auteur <span class="opt">facultatif</span></label><input id="d-author" name="author" maxlength="200" value="${e(v.author || '')}"></div>
       </div>
-      <label for="d-reason">Pourquoi <span class="opt">facultatif, en une phrase</span></label>
-      <input id="d-reason" name="reason" maxlength="500" value="${e(v.reason || '')}">`;
+      <label for="d-reason">Pourquoi <span class="opt">facultatif</span></label>
+      <textarea id="d-reason" name="reason" rows="6" maxlength="5000">${e(v.reason || '')}</textarea>
+      <p class="hint">Séparez les paragraphes par une ligne vide.</p>`;
 }
 
 function discouraged({ items, user, csrf, error, values }) {
@@ -335,7 +336,7 @@ function discouraged({ items, user, csrf, error, values }) {
   ${items.length ? `<div class="fbi-list">${items.map(d => `
     <article class="fbi">
       <h3><span class="it">${te(d.title)}</span>${d.author ? `<span class="fbi-a">, ${e(d.author)}</span>` : ''}</h3>
-      ${d.reason ? `<p class="fbi-r">${te(d.reason)}</p>` : ''}
+      ${d.reason ? `<div class="fbi-r">${parasHtml(typo(d.reason))}</div>` : ''}
       <div class="cit-meta">Signalé par ${e(d.by_name || 'un ancien membre')} · ${fmtDate(d.created_at)}
         ${user.is_admin || user.id === d.user_id ? `<span class="row-actions inl"><a class="linklike" href="/fausses-bonnes-idees/${d.id}/modifier">Modifier</a>
           <form method="post" action="/fausses-bonnes-idees/${d.id}/supprimer" data-confirm="Retirer cet ouvrage de la liste ?">${csrfField(csrf)}<button class="linklike danger">Supprimer</button></form></span>` : ''}

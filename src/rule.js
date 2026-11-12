@@ -7,28 +7,27 @@ const { e, typo, paragraphs } = require('./util');
 const KEY = 'regle';
 const MAX = 8000;
 
-const DEFAULT_RULE = `« Le métier me doit le temps qu'il me faut pour ma vie intérieure. »
-
-Le but
-Le but de ma vie est le salut de mon âme, non l'espoir de ne jamais recevoir de reproche sur la façon dont j'accomplis mon métier. Le cercle existe pour nous aider à ne pas le perdre de vue.
-
-La prière
-Méditation et prière chaque jour, quels que soient les aléas du service. Une prière véritable, et non une récitation de formules.
+// Les articles I à V reprennent le texte « Du point de vue spirituel » ; VI et VII, le projet du cercle.
+const DEFAULT_RULE = `Le but
+Le but de ma vie est le salut de mon âme, et non pas l'espoir de ne jamais recevoir de reproche sur la façon dont j'accomplis mon métier.
 
 Le travail
-Le travail est une prière autant qu'il est offert à Dieu ; il ne la remplace pas. Fait pour les honneurs, la récompense ou les félicitations, il n'en est plus une.
+Le travail est une prière. Oui, mais il ne remplace pas entièrement la prière ; et il n'est une prière qu'autant qu'il est offert à Dieu. Si le travail a pour raison d'être l'argent ou les honneurs, ou l'espoir d'une félicitation ou d'une récompense, ce n'est plus une prière.
+
+La prière
+Méditation et prière sont choses nécessaires. Elles doivent être quotidiennes. Prière… et non pas récitation de formules.
+
+Le temps
+Le métier me doit le temps qu'il me faut pour ma vie intérieure. Ce temps se prévoit : chacun tient un emploi du temps souple mais précis, qui résiste aux aléas du service.
+
+Le bilan
+Une année qui ne m'a pas fait faire de progrès du point de vue spirituel est une mauvaise année, quels qu'en soient les succès. Chacun fait régulièrement le point.
 
 La formation
-Notre métier exige une formation propre. Chacun lit, puis partage : une fiche, une idée de lecture, une citation. Ce qui est gardé pour soi ne sert qu'à un seul.
-
-L'organisation
-Une vie intérieure se prépare. Chacun tient un emploi du temps souple mais précis, et partage ce qui lui permet de tenir.
+Notre métier exige une formation propre. Chacun lit, puis partage : une fiche, une idée de lecture, une citation.
 
 La constance
-Peu, mais régulièrement. Mieux vaut une petite initiative tenue dans la durée qu'un grand projet abandonné. Ce que nous refusons, c'est de ne rien faire.
-
-L'entraide
-Nul ne tient seul. Ce qui est partagé ici l'est entre membres, pour que chacun fasse rayonner sa foi là où il sert.`;
+Peu, mais régulièrement. Ce que nous refusons, c'est de ne rien faire.`;
 
 function getRule() {
   const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(KEY);
