@@ -1,0 +1,21 @@
+{
+  "name": "cabinet-lecture",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Partage de fiches de lecture, citations et emplois du temps",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --env-file=.env server.js",
+    "create-admin": "node scripts/create-admin.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.8.1",
+    "express": "^4.21.2",
+    "multer": "^2.0.1",
+    "pdfkit": "^0.16.0"
+  }
+}

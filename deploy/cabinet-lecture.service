@@ -1,0 +1,30 @@
+[Unit]
+Description=Cabinet de lecture (Node.js)
+After=network.target
+
+[Service]
+Type=simple
+User=cabinet
+Group=cabinet
+WorkingDirectory=/opt/cabinet-lecture
+EnvironmentFile=/opt/cabinet-lecture/.env
+Environment=NODE_ENV=production
+Environment=TZ=Europe/Paris
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+RestartSec=3
+
+# Durcissement
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/cabinet-lecture/data
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target
